@@ -40,7 +40,9 @@ function renderField(
     label.appendChild(mark);
   }
 
-  let inputEl: HTMLElement;
+  // Use precise union (not HTMLElement) — @cloudflare/workers-types ships a
+  // partial HTMLElement override that conflicts with DOM's specific subclasses.
+  let inputEl: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
   const placeholder = localize(field.placeholder, lang);
 
   switch (field.type) {
