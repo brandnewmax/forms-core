@@ -1,0 +1,10 @@
+/*
+ * Per-tenant theme placeholder.
+ *
+ * This file ships empty in the default build to silence the 404 that embed.js
+ * would otherwise trigger on every page load. Per-tenant deployments overwrite
+ * this with an AI-generated theme (see tools/theme-prompt-template.md) that
+ * assigns the 30 --mf-* tokens.
+ *
+ * Empty by design — leave intentional defaults from theme-default.css in place.
+ */

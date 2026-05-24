@@ -123,7 +123,14 @@ export class MmldigiForm extends HTMLElement {
         | HTMLInputElement
         | HTMLTextAreaElement
         | HTMLSelectElement;
-      if (t && t.name && t.value) {
+      if (!t || !t.name) return;
+      // Checkbox: "completed" = checked. Otherwise: "completed" = non-empty value.
+      // (Without this branch, unchecking a box also fires field_complete because
+      // an unchecked checkbox still has .value === 'on' — semantically wrong.)
+      const completed = t.type === 'checkbox'
+        ? (t as HTMLInputElement).checked
+        : !!t.value;
+      if (completed) {
         dispatchFormEvent(this, 'field_complete', { formId, fieldName: t.name });
       }
     });
@@ -233,7 +240,12 @@ export class MmldigiForm extends HTMLElement {
     this.innerHTML = '';
     const div = document.createElement('div');
     div.className = 'mf-success-message';
-    div.textContent = 'Thanks — we got your message.';
+    // Use schema.successMessage if defined (backend already localized it via ?lang=).
+    // Fall back to generic English. Don't ship a hardcoded English string to CJK users.
+    const msg = this.schema?.successMessage;
+    div.textContent = (typeof msg === 'string' && msg)
+      ? msg
+      : 'Thanks — we got your message.';
     div.setAttribute('role', 'status');
     this.appendChild(div);
   }
