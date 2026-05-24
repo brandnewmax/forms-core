@@ -37,13 +37,30 @@ function jsonResponse(body: unknown, status: number, cors: Record<string, string
   });
 }
 
+/**
+ * Anything with a `waitUntil` method — CF Pages EventContext satisfies this
+ * structurally without needing to import the type.
+ */
+interface WaitUntilCapable {
+  waitUntil(promise: Promise<unknown>): void;
+}
+
+const MAX_BODY_BYTES = 65_536; // 64KB — generous for forms, blocks D1 row DoS
+
 export async function handleSubmit(
   req: Request,
   env: Env,
   formId: string,
+  execCtx?: WaitUntilCapable,
 ): Promise<Response> {
   const origin = req.headers.get('Origin');
   const cors = corsHeaders(origin, env.ALLOWED_ORIGINS);
+
+  // Body size guard — reject before parsing so large payloads can't even land in memory
+  const contentLength = parseInt(req.headers.get('content-length') ?? '0', 10);
+  if (contentLength > MAX_BODY_BYTES) {
+    return jsonResponse({ error: 'Payload too large' }, 413, cors);
+  }
 
   // 1. Parse body
   let body: RawSubmissionBody;
@@ -119,11 +136,12 @@ export async function handleSubmit(
   };
   await insertSubmission(env.DB, submission);
 
-  // 9. afterStore hook (concurrent, error-isolated) — use waitUntil for non-blocking
-  //    in Pages Functions runtime; in tests there's no waitUntil so we await.
+  // 9. afterStore hook (concurrent, error-isolated)
+  //    Production: ExecutionContext.waitUntil offloads to post-response background work.
+  //    Tests: no execCtx passed → await inline so assertions see hook completion.
   const afterStorePromise = runHook('afterStore', submission, env);
-  if ('waitUntil' in (req as any) && typeof (req as any).waitUntil === 'function') {
-    (req as any).waitUntil(afterStorePromise);
+  if (execCtx?.waitUntil) {
+    execCtx.waitUntil(afterStorePromise);
   } else {
     await afterStorePromise;
   }

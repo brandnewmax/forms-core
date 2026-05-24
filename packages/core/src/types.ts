@@ -24,7 +24,9 @@ export interface FormSchema {
   fields: FieldSchema[];
   submitButton: string | Record<string, string>;
   successMessage?: string | Record<string, string>;
-  spamMinTimeMs?: number;     // 默认 3000
+  // Note: spam_min_time_ms lives in forms_settings (FormSettings.spamMinTimeMs),
+  // NOT here. Keeps a single source of truth and avoids leaking the value to the
+  // client via GET /schema.
 }
 
 /**

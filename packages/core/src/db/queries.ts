@@ -87,14 +87,28 @@ interface SubmissionRow {
   created_at: number;
 }
 
+/**
+ * Defensively parse JSON column. Returns `fallback` on parse failure, logging
+ * the error. Used to keep a single bad row from 500'ing the whole list query.
+ */
+function safeJson<T>(raw: string | null, fallback: T, ctx: string): T {
+  if (raw === null || raw === '') return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch (e) {
+    console.error(`[db:queries] malformed JSON in ${ctx}`, e);
+    return fallback;
+  }
+}
+
 function rowToSubmission(r: SubmissionRow): Submission {
   return {
     id: r.id,
     formId: r.form_id,
     schemaVersion: r.schema_version,
     lang: r.lang,
-    fields: JSON.parse(r.fields_json),
-    enriched: r.enriched_json ? JSON.parse(r.enriched_json) : {},
+    fields: safeJson<Record<string, unknown>>(r.fields_json, {}, `submissions.${r.id}.fields_json`),
+    enriched: safeJson<Record<string, unknown>>(r.enriched_json, {}, `submissions.${r.id}.enriched_json`),
     context: {
       ip: r.ip ?? '',
       ipCountry: r.ip_country ?? undefined,
@@ -110,10 +124,14 @@ function rowToSubmission(r: SubmissionRow): Submission {
       },
       sessionId: r.session_id ?? undefined,
       firstSeenAt: r.first_seen_at ?? undefined,
-      journey: r.journey_json ? JSON.parse(r.journey_json) : undefined,
+      journey: r.journey_json
+        ? safeJson<Array<{ url: string; ts: number }> | undefined>(r.journey_json, undefined, `submissions.${r.id}.journey_json`)
+        : undefined,
     },
     score: r.score ?? undefined,
-    scoreDetails: r.score_details_json ? JSON.parse(r.score_details_json) : undefined,
+    scoreDetails: r.score_details_json
+      ? safeJson<Record<string, unknown> | undefined>(r.score_details_json, undefined, `submissions.${r.id}.score_details_json`)
+      : undefined,
     feishuSyncStatus: (r.feishu_sync_status as Submission['feishuSyncStatus']) ?? undefined,
     emailForwardStatus: (r.email_forward_status as Submission['emailForwardStatus']) ?? undefined,
     createdAt: r.created_at,
@@ -158,7 +176,8 @@ export async function getLatestSchema(db: D1Database, formId: string): Promise<F
     ORDER BY version DESC
     LIMIT 1
   `).bind(formId).first<{ schema_json: string }>();
-  return row ? JSON.parse(row.schema_json) : null;
+  if (!row) return null;
+  return safeJson<FormSchema | null>(row.schema_json, null, `schema_versions.${formId}.schema_json`);
 }
 
 export async function getFormSettings(db: D1Database, formId: string): Promise<FormSettings | null> {
@@ -175,9 +194,9 @@ export async function getFormSettings(db: D1Database, formId: string): Promise<F
   if (!row) return null;
   return {
     formId: row.form_id,
-    notifyEmails: JSON.parse(row.notify_emails),
-    webhooks: JSON.parse(row.webhooks_json),
-    feishuConfig: row.feishu_config ? JSON.parse(row.feishu_config) : null,
+    notifyEmails: safeJson<string[]>(row.notify_emails, [], `forms_settings.${formId}.notify_emails`),
+    webhooks: safeJson<unknown[]>(row.webhooks_json, [], `forms_settings.${formId}.webhooks_json`),
+    feishuConfig: safeJson<unknown | null>(row.feishu_config, null, `forms_settings.${formId}.feishu_config`),
     scoreThreshold: row.score_threshold,
     spamMinTimeMs: row.spam_min_time_ms,
     rateLimitPerIp: row.rate_limit_per_ip,
