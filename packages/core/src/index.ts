@@ -36,3 +36,12 @@ export {
 } from './anti-spam.js';
 
 export { isOriginAllowed, corsHeaders, handlePreflight } from './cors.js';
+
+export {
+  insertSubmission,
+  getSubmission,
+  listSubmissions,
+  getLatestSchema,
+  getFormSettings,
+} from './db/queries.js';
+export type { ListSubmissionsOptions, FormSettings } from './db/queries.js';
