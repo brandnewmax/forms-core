@@ -8,4 +8,11 @@ packages/lite-deploy/wrangler.toml
 .env.local
 coverage/
 packages/embed/dist/
-packages/lite-deploy/public/
+# public/ contains both committed source (admin HTML/CSS) and build output
+# from packages/embed (embed.js + CSS files). Ignore only the build artifacts.
+packages/lite-deploy/public/embed.js
+packages/lite-deploy/public/embed.js.map
+packages/lite-deploy/public/structure.css
+packages/lite-deploy/public/theme-default.css
+packages/lite-deploy/public/tokens-spec.css
+packages/lite-deploy/public/theme/form-theme.css

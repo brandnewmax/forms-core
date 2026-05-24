@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Admin — Submission detail</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+  <header>
+    <h1>mmldigi-forms admin</h1>
+    <nav>
+      <a href="/admin/">Submissions</a>
+      <a href="/admin/forms.html">Forms</a>
+      <a href="/admin/auth/logout">Log out</a>
+    </nav>
+  </header>
+  <main>
+    <p><a href="/admin/" class="muted">← Back to list</a></p>
+    <h2 id="title" style="font-size:18px;margin:0 0 24px;">Loading...</h2>
+    <div id="sections"></div>
+  </main>
+  <script>
+    function escapeHtml(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+    function section(title, body) {
+      const d = document.createElement('div');
+      d.style.marginBottom = '32px';
+      d.innerHTML = `<h3 style="font-size:11px;text-transform:uppercase;color:#8A8E96;letter-spacing:0.08em;margin:0 0 12px;">${title}</h3>${body}`;
+      return d;
+    }
+    function kvTable(obj) {
+      return `<table>${Object.entries(obj).map(([k,v]) =>
+        `<tr><td style="width:140px;color:#8A8E96;font-family:monospace;">${escapeHtml(k)}</td><td>${escapeHtml(typeof v === 'object' ? JSON.stringify(v) : v)}</td></tr>`
+      ).join('')}</table>`;
+    }
+    async function load() {
+      const id = new URLSearchParams(window.location.search).get('id');
+      if (!id) { document.getElementById('title').textContent = 'No id'; return; }
+      const r = await fetch(`/admin/api/submissions/${encodeURIComponent(id)}`, { credentials: 'include' });
+      if (r.status === 401) { window.location = '/admin/login.html'; return; }
+      if (r.status === 404) { document.getElementById('title').textContent = 'Not found'; return; }
+      const s = await r.json();
+      document.getElementById('title').textContent = `${s.formId} — ${s.id}`;
+      const root = document.getElementById('sections');
+      root.appendChild(section('Submitted', `<p>${new Date(s.createdAt).toISOString()}</p>`));
+      root.appendChild(section('Fields', kvTable(s.fields)));
+      root.appendChild(section('Visitor context', kvTable({
+        ip: s.context.ip, country: s.context.ipCountry,
+        page: s.context.pageUrl, referrer: s.context.referrer,
+        utm: JSON.stringify(s.context.utm), userAgent: s.context.userAgent,
+      })));
+      if (s.score !== undefined || (s.enriched && Object.keys(s.enriched).length > 0)) {
+        root.appendChild(section('Pro enrichment', kvTable({
+          score: s.score, ...s.enriched,
+        })));
+      }
+      root.appendChild(section('Raw JSON', `<pre>${escapeHtml(JSON.stringify(s, null, 2))}</pre>`));
+    }
+    load();
+  </script>
+</body>
+</html>

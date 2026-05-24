@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Admin — Forms</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+  <header>
+    <h1>mmldigi-forms admin</h1>
+    <nav>
+      <a href="/admin/">Submissions</a>
+      <a href="/admin/forms.html" class="active">Forms</a>
+      <a href="/admin/auth/logout">Log out</a>
+    </nav>
+  </header>
+  <main>
+    <h2 style="font-size:16px;margin:0 0 16px;">Forms</h2>
+    <table>
+      <thead><tr><th>ID</th><th>Name</th><th>Created</th><th></th></tr></thead>
+      <tbody id="forms-tbody"></tbody>
+    </table>
+
+    <h3 style="margin:32px 0 12px;font-size:14px;">Create new form</h3>
+    <div class="filters">
+      <input id="new-id" placeholder="id (e.g. discovery-call)">
+      <input id="new-name" placeholder="Name (e.g. Discovery Call)">
+      <button class="btn" id="create-btn">Create</button>
+    </div>
+    <p id="create-status" class="muted"></p>
+
+    <h3 style="margin:32px 0 12px;font-size:14px;" id="editor-title">Edit schema (select a form above)</h3>
+    <div id="editor" style="display:none;">
+      <p class="muted">JSON schema (latest version below). Edit and click Save to publish a new version.</p>
+      <textarea id="schema-json" style="width:100%;height:400px;background:#1D2025;color:#F4F4F7;border:1px solid #2A2D33;border-radius:4px;padding:12px;font-family:monospace;font-size:12px;"></textarea>
+      <p style="margin-top:12px;">
+        <button class="btn" id="save-schema">Save as new version</button>
+        <a class="btn btn-secondary" href="#" id="settings-link" style="margin-left:8px;">Settings →</a>
+      </p>
+      <p id="save-status" class="muted"></p>
+    </div>
+  </main>
+  <script>
+    let currentFormId = null;
+    function escapeHtml(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+    async function loadForms() {
+      const r = await fetch('/admin/api/forms', { credentials: 'include' });
+      if (r.status === 401) { window.location = '/admin/login.html'; return; }
+      const forms = await r.json();
+      const tb = document.getElementById('forms-tbody');
+      tb.innerHTML = '';
+      for (const f of forms) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${escapeHtml(f.id)}</td><td>${escapeHtml(f.name)}</td><td class="muted">${new Date(f.createdAt).toISOString().slice(0,10)}</td><td><a href="#" data-edit="${escapeHtml(f.id)}">Edit schema</a></td>`;
+        tb.appendChild(tr);
+      }
+      tb.querySelectorAll('[data-edit]').forEach(a => a.addEventListener('click', e => {
+        e.preventDefault();
+        loadEditor(a.getAttribute('data-edit'));
+      }));
+    }
+    async function loadEditor(formId) {
+      currentFormId = formId;
+      document.getElementById('editor-title').textContent = `Edit schema — ${formId}`;
+      document.getElementById('editor').style.display = 'block';
+      document.getElementById('settings-link').href = `/admin/settings.html?id=${encodeURIComponent(formId)}`;
+      const r = await fetch(`/admin/api/forms/${encodeURIComponent(formId)}/schema/current`, { credentials: 'include' });
+      const schema = await r.json();
+      document.getElementById('schema-json').value = JSON.stringify(schema, null, 2);
+    }
+    document.getElementById('save-schema').addEventListener('click', async () => {
+      if (!currentFormId) return;
+      let body;
+      try { body = JSON.parse(document.getElementById('schema-json').value); }
+      catch (e) { document.getElementById('save-status').textContent = `Invalid JSON: ${e.message}`; return; }
+      const r = await fetch(`/admin/api/forms/${encodeURIComponent(currentFormId)}/schema`, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const j = await r.json();
+      document.getElementById('save-status').textContent = r.ok ? `Saved as version ${j.version}` : `Error: ${j.error}`;
+    });
+    document.getElementById('create-btn').addEventListener('click', async () => {
+      const id = document.getElementById('new-id').value.trim();
+      const name = document.getElementById('new-name').value.trim();
+      if (!id || !name) { document.getElementById('create-status').textContent = 'id and name required'; return; }
+      const r = await fetch('/admin/api/forms', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, name }),
+      });
+      const j = await r.json();
+      document.getElementById('create-status').textContent = r.ok ? `Created ${j.id}` : `Error: ${j.error}`;
+      if (r.ok) loadForms();
+    });
+    loadForms();
+  </script>
+</body>
+</html>

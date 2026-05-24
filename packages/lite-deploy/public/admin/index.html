@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Admin — Submissions</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+<body>
+  <header>
+    <h1>mmldigi-forms admin</h1>
+    <nav>
+      <a href="/admin/" class="active">Submissions</a>
+      <a href="/admin/forms.html">Forms</a>
+      <a href="/admin/auth/logout">Log out</a>
+    </nav>
+  </header>
+  <main>
+    <div class="filters">
+      <select id="filter-form-id">
+        <option value="">All forms</option>
+      </select>
+      <input type="date" id="filter-from" placeholder="From date">
+      <input type="date" id="filter-to" placeholder="To date">
+      <button class="btn" id="apply-filters">Apply</button>
+      <button class="btn btn-secondary" id="export-csv">Export CSV</button>
+    </div>
+    <p id="meta" class="muted">Loading...</p>
+    <table id="table">
+      <thead>
+        <tr><th>When</th><th>Form</th><th>Name / Email</th><th>Country</th><th>Page</th><th></th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </main>
+  <script>
+    async function fetchForms() {
+      const r = await fetch('/admin/api/forms', { credentials: 'include' });
+      if (!r.ok) return;
+      const forms = await r.json();
+      const sel = document.getElementById('filter-form-id');
+      for (const f of forms) {
+        const o = document.createElement('option');
+        o.value = f.id; o.textContent = f.id;
+        sel.appendChild(o);
+      }
+    }
+    function buildQuery() {
+      const params = new URLSearchParams();
+      const formId = document.getElementById('filter-form-id').value;
+      const from = document.getElementById('filter-from').value;
+      const to = document.getElementById('filter-to').value;
+      if (formId) params.set('form_id', formId);
+      if (from) params.set('from', new Date(from).getTime());
+      if (to) params.set('to', new Date(to).getTime() + 86_400_000);
+      return params.toString();
+    }
+    async function load() {
+      const r = await fetch('/admin/api/submissions?' + buildQuery(), { credentials: 'include' });
+      if (r.status === 401) { window.location = '/admin/login.html'; return; }
+      const { items, total } = await r.json();
+      document.getElementById('meta').textContent = `${total} submission(s)`;
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = '';
+      for (const s of items) {
+        const tr = document.createElement('tr');
+        const ts = new Date(s.createdAt).toISOString().replace('T', ' ').slice(0, 19);
+        const nameEmail = `${s.fields.name ?? ''} <${s.fields.email ?? ''}>`;
+        tr.innerHTML = `
+          <td class="muted">${ts}</td>
+          <td>${s.formId}</td>
+          <td>${escapeHtml(nameEmail)}</td>
+          <td>${s.context.ipCountry ?? ''}</td>
+          <td class="muted"><a href="${escapeAttr(s.context.pageUrl)}" target="_blank">${escapeHtml(short(s.context.pageUrl))}</a></td>
+          <td><a href="/admin/detail.html?id=${encodeURIComponent(s.id)}">View</a></td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+    function short(u) { return u && u.length > 40 ? u.slice(0, 37) + '...' : (u || ''); }
+    function escapeHtml(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+    function escapeAttr(s) { return escapeHtml(s); }
+    document.getElementById('apply-filters').addEventListener('click', load);
+    document.getElementById('export-csv').addEventListener('click', () => {
+      window.location = '/admin/api/submissions?' + buildQuery() + '&format=csv';
+    });
+    fetchForms().then(load);
+  </script>
+</body>
+</html>
