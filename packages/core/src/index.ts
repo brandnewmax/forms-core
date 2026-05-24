@@ -54,3 +54,6 @@ export { handleSubmit } from './api-handlers/submit.js';
 
 export { sendSubmissionEmail, buildEmailHtml } from './email-forwarder.js';
 export type { EmailOptions, EmailResult } from './email-forwarder.js';
+
+export { dispatchWebhook } from './webhook-dispatcher.js';
+export type { WebhookTemplate, WebhookConfig, WebhookResult } from './webhook-dispatcher.js';
