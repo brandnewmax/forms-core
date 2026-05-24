@@ -55,6 +55,7 @@ export { handleSubmit } from './api-handlers/submit.js';
 export { handleListSubmissions } from './api-handlers/admin/list-submissions.js';
 
 export { handleGetSubmission } from './api-handlers/admin/get-submission.js';
+export { handleTranslateSchema } from './api-handlers/admin/translate.js';
 
 export { sendSubmissionEmail, buildEmailHtml } from './email-forwarder.js';
 export type { EmailOptions, EmailResult } from './email-forwarder.js';
