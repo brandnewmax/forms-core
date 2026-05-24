@@ -1,0 +1,61 @@
+/*
+ * mmldigi-forms — Theme tokens specification
+ *
+ * This file is pure documentation. It defines the FULL set of CSS variables
+ * a theme.css file is allowed to override. Themes must only assign these
+ * variable names — no extras, no class definitions.
+ *
+ * Load order at runtime:
+ *   1. structure.css     — layout, a11y, animations (uses var() with fallbacks)
+ *   2. theme-default.css — assigns generic dark defaults to all variables
+ *   3. theme/form-theme.css (per-tenant, AI-generated) — overrides defaults
+ *
+ * This file (tokens-spec.css) is NOT loaded at runtime; it serves as the
+ * contract for the AI theme prompt and human-written themes.
+ */
+
+:root {
+  /* ─────────── Colors (12) ─────────── */
+  --mf-color-bg:            /* 表单容器背景 */;
+  --mf-color-surface:       /* 输入框 / 卡片底色 */;
+  --mf-color-surface-hover: /* hover 时输入框底色 */;
+  --mf-color-border:        /* 输入框边框默认 */;
+  --mf-color-border-focus:  /* focus 时边框 — 对 bg 对比度 ≥ 3:1 */;
+  --mf-color-text:          /* 主文字 — 对 bg 对比度 ≥ 4.5:1 */;
+  --mf-color-text-muted:    /* placeholder / 辅助文字 */;
+  --mf-color-text-on-accent:/* CTA 按钮上的文字 */;
+  --mf-color-accent:        /* 提交按钮 / 进度 / 高亮 */;
+  --mf-color-accent-hover:  /* accent hover 态 */;
+  --mf-color-error:         /* 校验错误色 */;
+  --mf-color-success:       /* 提交成功色 */;
+
+  /* ─────────── Typography (7) ─────────── */
+  --mf-font-family:          /* 主字体栈 — 推荐用 var(--font-sans, fallback) */;
+  --mf-font-family-mono:     /* mono 字体 — label/hint 用 */;
+  --mf-font-size-label:      /* 11-14px 常见 */;
+  --mf-font-size-input:      /* ≥ 16px 防 iOS Safari 缩放 */;
+  --mf-font-weight-label:    /* 400-600 */;
+  --mf-label-uppercase:      /* "uppercase" 或 "none" */;
+  --mf-label-letter-spacing: /* 0 或 0.08em 等 */;
+
+  /* ─────────── Shape (3) ─────────── */
+  --mf-radius-input:  /* 0 / 4 / 8 / 12 / 999px */;
+  --mf-radius-button: /* 同上 */;
+  --mf-border-width:  /* 1 / 2px */;
+
+  /* ─────────── Spacing (4) ─────────── */
+  --mf-spacing-field:   /* 字段之间垂直间距 */;
+  --mf-spacing-input-x: /* 输入框内左右 padding */;
+  --mf-spacing-input-y: /* 输入框内上下 padding */;
+  --mf-spacing-section: /* 多步骤之间间距(Phase 3+ 多步表单用) */;
+
+  /* ─────────── Interaction (3) ─────────── */
+  --mf-transition:   /* 0.15s ease 等 */;
+  --mf-focus-ring:   /* 3px solid var(--mf-color-accent) 等 */;
+  --mf-shadow-input: /* none 或 inset 0 1px 2px rgba(0,0,0,.1) 等 */;
+
+  /* ─────────── Reserved (1) ─────────── */
+  --mf-reserved-future-1: /* 占位,将来扩展 */;
+}
+
+/* total: 30 tokens */

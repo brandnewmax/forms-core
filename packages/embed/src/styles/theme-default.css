@@ -1,0 +1,52 @@
+/*
+ * mmldigi-forms — Default theme (generic dark)
+ *
+ * Assigns defaults to all 30 --mf-* tokens. Per-tenant theme/form-theme.css
+ * can override any token. Tokens use var(--host-token, fallback) where
+ * sensible so themes inherit from the host site's brand variables when
+ * available.
+ */
+
+:root {
+  /* Colors */
+  --mf-color-bg:            var(--bg, transparent);
+  --mf-color-surface:       var(--surface-1, #14161A);
+  --mf-color-surface-hover: var(--surface-2, #1D2025);
+  --mf-color-border:        var(--border, #2A2D33);
+  --mf-color-border-focus:  var(--accent, #C5FF50);
+  --mf-color-text:          var(--text-primary, #F4F4F7);
+  --mf-color-text-muted:    var(--text-muted, #6B6F7A);
+  --mf-color-text-on-accent: #0A0B0E;
+  --mf-color-accent:        var(--accent, #C5FF50);
+  --mf-color-accent-hover:  #D4FF7A;
+  --mf-color-error:         #FF6B6B;
+  --mf-color-success:       #59C988;
+
+  /* Typography */
+  --mf-font-family:          var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  --mf-font-family-mono:     var(--font-mono, 'JetBrains Mono', ui-monospace, 'SF Mono', monospace);
+  --mf-font-size-label:      12px;
+  --mf-font-size-input:      16px;
+  --mf-font-weight-label:    500;
+  --mf-label-uppercase:      uppercase;
+  --mf-label-letter-spacing: 0.1em;
+
+  /* Shape */
+  --mf-radius-input:  6px;
+  --mf-radius-button: 999px;
+  --mf-border-width:  1px;
+
+  /* Spacing */
+  --mf-spacing-field:   20px;
+  --mf-spacing-input-x: 14px;
+  --mf-spacing-input-y: 12px;
+  --mf-spacing-section: 32px;
+
+  /* Interaction */
+  --mf-transition:   all 0.15s ease;
+  --mf-focus-ring:   0 0 0 3px rgba(197, 255, 80, 0.25);
+  --mf-shadow-input: none;
+
+  /* Reserved */
+  --mf-reserved-future-1: initial;
+}

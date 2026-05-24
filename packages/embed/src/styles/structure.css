@@ -1,0 +1,181 @@
+/*
+ * mmldigi-forms — Structural CSS
+ *
+ * Defines layout, a11y, focus states, error animations. Uses ONLY var(--mf-*)
+ * references. Default values come from theme-default.css; per-tenant theme
+ * can override any var.
+ *
+ * All class names prefixed with `mf-` to avoid collisions in Light DOM.
+ */
+
+mmldigi-form {
+  display: block;
+  font-family: var(--mf-font-family);
+  color: var(--mf-color-text);
+  background: var(--mf-color-bg);
+  font-size: var(--mf-font-size-input);
+  line-height: 1.5;
+}
+
+.mf-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mf-spacing-field);
+  width: 100%;
+}
+
+.mf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mf-label {
+  font-family: var(--mf-font-family-mono);
+  font-size: var(--mf-font-size-label);
+  font-weight: var(--mf-font-weight-label);
+  text-transform: var(--mf-label-uppercase);
+  letter-spacing: var(--mf-label-letter-spacing);
+  color: var(--mf-color-text);
+}
+
+.mf-label .mf-required-mark {
+  color: var(--mf-color-error);
+  margin-left: 4px;
+}
+
+.mf-input,
+.mf-textarea,
+.mf-select {
+  font-family: inherit;
+  font-size: var(--mf-font-size-input);
+  color: var(--mf-color-text);
+  background: var(--mf-color-surface);
+  border: var(--mf-border-width) solid var(--mf-color-border);
+  border-radius: var(--mf-radius-input);
+  padding: var(--mf-spacing-input-y) var(--mf-spacing-input-x);
+  width: 100%;
+  box-sizing: border-box;
+  transition: var(--mf-transition);
+  box-shadow: var(--mf-shadow-input);
+}
+
+.mf-input::placeholder,
+.mf-textarea::placeholder {
+  color: var(--mf-color-text-muted);
+}
+
+.mf-input:hover,
+.mf-textarea:hover,
+.mf-select:hover {
+  background: var(--mf-color-surface-hover);
+}
+
+.mf-input:focus,
+.mf-textarea:focus,
+.mf-select:focus {
+  outline: none;
+  border-color: var(--mf-color-border-focus);
+  box-shadow: var(--mf-focus-ring);
+}
+
+.mf-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.mf-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.mf-checkbox {
+  margin: 0;
+  margin-top: 3px;
+  accent-color: var(--mf-color-accent);
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.mf-checkbox-row .mf-label {
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: inherit;
+  font-size: var(--mf-font-size-input);
+}
+
+/* Honeypot — visually hidden, accessible to screen readers as "leave empty" */
+.mf-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.mf-submit {
+  font-family: inherit;
+  font-size: var(--mf-font-size-input);
+  font-weight: 600;
+  color: var(--mf-color-text-on-accent);
+  background: var(--mf-color-accent);
+  border: none;
+  border-radius: var(--mf-radius-button);
+  padding: var(--mf-spacing-input-y) calc(var(--mf-spacing-input-x) * 2);
+  cursor: pointer;
+  transition: var(--mf-transition);
+}
+
+.mf-submit:hover:not(:disabled) {
+  background: var(--mf-color-accent-hover);
+}
+
+.mf-submit:focus-visible {
+  outline: none;
+  box-shadow: var(--mf-focus-ring);
+}
+
+.mf-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mf-error-message {
+  color: var(--mf-color-error);
+  font-size: calc(var(--mf-font-size-label) + 1px);
+  margin-top: 4px;
+}
+
+.mf-field[data-invalid="true"] .mf-input,
+.mf-field[data-invalid="true"] .mf-textarea,
+.mf-field[data-invalid="true"] .mf-select {
+  border-color: var(--mf-color-error);
+  animation: mf-shake 0.3s ease;
+}
+
+.mf-success-message {
+  color: var(--mf-color-success);
+  font-size: var(--mf-font-size-input);
+  padding: var(--mf-spacing-input-y) var(--mf-spacing-input-x);
+  border: var(--mf-border-width) solid var(--mf-color-success);
+  border-radius: var(--mf-radius-input);
+}
+
+@keyframes mf-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mf-field[data-invalid="true"] .mf-input,
+  .mf-field[data-invalid="true"] .mf-textarea,
+  .mf-field[data-invalid="true"] .mf-select {
+    animation: none;
+  }
+  .mf-input, .mf-textarea, .mf-select, .mf-submit {
+    transition: none;
+  }
+}
