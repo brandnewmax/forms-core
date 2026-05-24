@@ -28,3 +28,9 @@ export {
 } from './plugin-loader.js';
 
 export { validateFields } from './validation.js';
+
+export {
+  checkHoneypot,
+  checkTimeOnForm,
+  checkRateLimit,
+} from './anti-spam.js';
