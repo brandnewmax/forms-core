@@ -51,3 +51,6 @@ export { handleGetSchema } from './api-handlers/schema.js';
 export { handleHealth } from './api-handlers/health.js';
 
 export { handleSubmit } from './api-handlers/submit.js';
+
+export { sendSubmissionEmail, buildEmailHtml } from './email-forwarder.js';
+export type { EmailOptions, EmailResult } from './email-forwarder.js';
