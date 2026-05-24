@@ -95,6 +95,10 @@ export interface Env {
   ADMIN_GITHUB_USERS?: string;    // comma-separated GitHub logins
   SESSION_SECRET?: string;         // HMAC signing key for session cookies
   ADMIN_BASE_URL?: string;         // e.g. https://forms.mmldigi.com (for OAuth callback URL)
+  // ── i18n auto-translation (optional; feature off when DEEPL_API_KEY absent) ──
+  DEEPL_API_KEY?: string;          // DeepL auth key (secret)
+  DEEPL_SERVER_URL?: string;       // e.g. https://api.deepl-pro.com (proxy); default https://api.deepl.com
+  SITE_URL?: string;               // host site root, e.g. https://mmldigi-en-site.pages.dev (for hreflang discovery)
 }
 
 /**
