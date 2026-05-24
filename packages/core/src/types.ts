@@ -65,8 +65,8 @@ export interface Submission extends SubmitCtx {
   createdAt: number;
   score?: number;
   scoreDetails?: Record<string, unknown>;
-  feishuSyncStatus?: 'pending' | 'sent' | 'failed';
-  emailForwardStatus?: 'pending' | 'sent' | 'failed';
+  feishuSyncStatus?: 'sent' | 'failed';      // undefined = not attempted (DB NULL)
+  emailForwardStatus?: 'sent' | 'failed';     // undefined = not attempted (DB NULL)
 }
 
 /**
