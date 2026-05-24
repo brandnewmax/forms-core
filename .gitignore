@@ -7,3 +7,5 @@ packages/lite-deploy/wrangler.toml
 .env
 .env.local
 coverage/
+packages/embed/dist/
+packages/lite-deploy/public/
