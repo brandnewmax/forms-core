@@ -19,3 +19,10 @@ export type {
   AdminWidget,
   AdminPanel,
 } from './plugin-api.js';
+
+export {
+  registerPlugin,
+  unregisterAll,
+  runHook,
+  getRegisteredPlugins,
+} from './plugin-loader.js';
