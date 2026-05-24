@@ -203,3 +203,62 @@ export async function getFormSettings(db: D1Database, formId: string): Promise<F
     redirectAfterSubmit: row.redirect_after_submit,
   };
 }
+
+export interface FormRecord {
+  id: string;
+  name: string;
+  active: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export async function listForms(db: D1Database): Promise<FormRecord[]> {
+  const rows = await db.prepare(`SELECT id, name, active, created_at, updated_at FROM forms ORDER BY id`)
+    .all<{ id: string; name: string; active: number; created_at: number; updated_at: number }>();
+  return rows.results.map(r => ({
+    id: r.id, name: r.name, active: r.active === 1,
+    createdAt: r.created_at, updatedAt: r.updated_at,
+  }));
+}
+
+export async function createForm(db: D1Database, id: string, name: string): Promise<void> {
+  const now = Date.now();
+  await db.prepare(`INSERT INTO forms (id, name, active, created_at, updated_at) VALUES (?1, ?2, 1, ?3, ?3)`)
+    .bind(id, name, now).run();
+  await db.prepare(`INSERT INTO forms_settings (form_id) VALUES (?1) ON CONFLICT(form_id) DO NOTHING`)
+    .bind(id).run();
+}
+
+export async function createSchemaVersion(db: D1Database, formId: string, schemaJson: string, createdBy: string | null): Promise<number> {
+  const cur = await db.prepare(`SELECT COALESCE(MAX(version), 0) AS v FROM schema_versions WHERE form_id = ?1`)
+    .bind(formId).first<{ v: number }>();
+  const nextVersion = (cur?.v ?? 0) + 1;
+  await db.prepare(`INSERT INTO schema_versions (form_id, version, schema_json, created_by, created_at) VALUES (?1, ?2, ?3, ?4, ?5)`)
+    .bind(formId, nextVersion, schemaJson, createdBy, Date.now()).run();
+  return nextVersion;
+}
+
+export interface UpdateSettingsInput {
+  notifyEmails?: string[];
+  webhooksJson?: unknown[];
+  scoreThreshold?: number;
+  spamMinTimeMs?: number;
+  rateLimitPerIp?: number;
+  redirectAfterSubmit?: string | null;
+}
+
+export async function updateFormSettings(db: D1Database, formId: string, input: UpdateSettingsInput): Promise<void> {
+  const sets: string[] = [];
+  const params: unknown[] = [];
+  let i = 1;
+  if (input.notifyEmails !== undefined)        { sets.push(`notify_emails = ?${i++}`); params.push(JSON.stringify(input.notifyEmails)); }
+  if (input.webhooksJson !== undefined)        { sets.push(`webhooks_json = ?${i++}`); params.push(JSON.stringify(input.webhooksJson)); }
+  if (input.scoreThreshold !== undefined)      { sets.push(`score_threshold = ?${i++}`); params.push(input.scoreThreshold); }
+  if (input.spamMinTimeMs !== undefined)       { sets.push(`spam_min_time_ms = ?${i++}`); params.push(input.spamMinTimeMs); }
+  if (input.rateLimitPerIp !== undefined)      { sets.push(`rate_limit_per_ip = ?${i++}`); params.push(input.rateLimitPerIp); }
+  if (input.redirectAfterSubmit !== undefined) { sets.push(`redirect_after_submit = ?${i++}`); params.push(input.redirectAfterSubmit); }
+  if (sets.length === 0) return;
+  params.push(formId);
+  await db.prepare(`UPDATE forms_settings SET ${sets.join(', ')} WHERE form_id = ?${i}`)
+    .bind(...params).run();
+}

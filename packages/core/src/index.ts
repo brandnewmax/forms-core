@@ -61,3 +61,19 @@ export type { EmailOptions, EmailResult } from './email-forwarder.js';
 
 export { dispatchWebhook } from './webhook-dispatcher.js';
 export type { WebhookTemplate, WebhookConfig, WebhookResult } from './webhook-dispatcher.js';
+
+export {
+  handleListForms,
+  handleCreateForm,
+  handleCreateSchemaVersion,
+  handleGetCurrentSchema,
+  handleGetSettings,
+  handleUpdateSettings,
+} from './api-handlers/admin/forms.js';
+export {
+  listForms,
+  createForm,
+  createSchemaVersion,
+  updateFormSettings,
+} from './db/queries.js';
+export type { FormRecord, UpdateSettingsInput } from './db/queries.js';
