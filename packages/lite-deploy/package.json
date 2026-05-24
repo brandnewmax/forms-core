@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler pages dev --d1 DB --kv RATE_LIMIT_KV",
-    "deploy": "wrangler pages deploy",
+    "dev": "pnpm sync-embed && wrangler pages dev public --d1 DB --kv RATE_LIMIT_KV",
+    "deploy": "pnpm sync-embed && wrangler pages deploy public",
+    "sync-embed": "pnpm --filter @mmldigi/forms-embed build && node scripts/sync-embed.mjs",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "typecheck": "tsc -p tsconfig.json --noEmit",
