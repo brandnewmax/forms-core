@@ -45,3 +45,5 @@ export {
   getFormSettings,
 } from './db/queries.js';
 export type { ListSubmissionsOptions, FormSettings } from './db/queries.js';
+
+export { handleGetSchema } from './api-handlers/schema.js';
