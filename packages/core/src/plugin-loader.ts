@@ -1,13 +1,18 @@
 import type {
-  FormsPlugin,
   SubmitCtx,
   Submission,
   SubmitResponse,
   ValidationError,
   RejectSignal,
   Env,
-} from './index.js';
+} from './types.js';
+import type { FormsPlugin } from './plugin-api.js';
 
+// Hook semantics:
+// - beforeValidate / beforeStore: a thrown error PROPAGATES (= submission fails
+//   with 500). Use RejectSignal return for graceful 400-style rejection.
+// - afterValidate / afterStore / beforeRespond: thrown errors are caught + logged
+//   (console.error) but other plugins still run.
 const REGISTRY: FormsPlugin[] = [];
 
 export function registerPlugin(plugin: FormsPlugin): void {
