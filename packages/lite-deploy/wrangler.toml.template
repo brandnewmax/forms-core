@@ -1,6 +1,7 @@
 name = "forms-{TENANT}"
 compatibility_date = "2024-05-01"
 compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "public"
 
 # Replace IDs with output of:
 #   wrangler d1 create forms-{TENANT}
