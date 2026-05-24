@@ -1,0 +1,21 @@
+{
+  "name": "@mmldigi/forms-lite-deploy",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev --d1 DB --kv RATE_LIMIT_KV",
+    "deploy": "wrangler pages deploy",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo 'no tests yet — integration tests come in Phase 1c'"
+  },
+  "dependencies": {
+    "@mmldigi/forms-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240512.0",
+    "wrangler": "^3.60.0"
+  }
+}

@@ -41,6 +41,19 @@ importers:
         specifier: 1.5.3
         version: 1.5.3(@types/node@25.9.1)
 
+  packages/lite-deploy:
+    dependencies:
+      '@mmldigi/forms-core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20240512.0
+        version: 4.20260524.1
+      wrangler:
+        specifier: ^3.60.0
+        version: 3.77.0(@cloudflare/workers-types@4.20260524.1)
+
 packages:
 
   '@cloudflare/kv-asset-handler@0.3.4':
