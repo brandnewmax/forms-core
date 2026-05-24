@@ -77,3 +77,7 @@ export {
   updateFormSettings,
 } from './db/queries.js';
 export type { FormRecord, UpdateSettingsInput } from './db/queries.js';
+
+export { signSession, verifySession } from './auth/session.js';
+export type { SessionPayload } from './auth/session.js';
+export { handleLogin, handleCallback, handleLogout } from './auth/github-oauth.js';

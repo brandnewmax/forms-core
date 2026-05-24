@@ -89,6 +89,12 @@ export interface Env {
   RATE_LIMIT_KV: KVNamespace;
   ALLOWED_ORIGINS: string;        // 逗号分隔
   ENVIRONMENT: 'development' | 'staging' | 'production';
+  // ── Phase 1c admin auth ──
+  GITHUB_CLIENT_ID?: string;
+  GITHUB_CLIENT_SECRET?: string;
+  ADMIN_GITHUB_USERS?: string;    // comma-separated GitHub logins
+  SESSION_SECRET?: string;         // HMAC signing key for session cookies
+  ADMIN_BASE_URL?: string;         // e.g. https://forms.mmldigi.com (for OAuth callback URL)
 }
 
 /**
