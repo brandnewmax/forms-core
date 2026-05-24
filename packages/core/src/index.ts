@@ -34,3 +34,5 @@ export {
   checkTimeOnForm,
   checkRateLimit,
 } from './anti-spam.js';
+
+export { isOriginAllowed, corsHeaders, handlePreflight } from './cors.js';
