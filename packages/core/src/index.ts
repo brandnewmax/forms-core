@@ -47,3 +47,5 @@ export {
 export type { ListSubmissionsOptions, FormSettings } from './db/queries.js';
 
 export { handleGetSchema } from './api-handlers/schema.js';
+
+export { handleHealth } from './api-handlers/health.js';
