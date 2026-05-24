@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { env } from 'cloudflare:test';
 import { handleSubmit } from '../src/api-handlers/submit.js';
 import { unregisterAll, registerPlugin, listSubmissions } from '../src/index.js';
@@ -41,6 +41,10 @@ describe('handleSubmit', () => {
   beforeEach(async () => {
     unregisterAll();
     await env.DB.exec('DELETE FROM submissions');
+    // Reset settings: clear notify_emails + webhooks so tests that don't care
+    // about side-effects don't make real network calls (email/webhook tests set their own values).
+    await env.DB.exec(`UPDATE forms_settings SET notify_emails = '[]', webhooks_json = '[]' WHERE form_id = 'contact'`);
+    vi.restoreAllMocks();
   });
 
   it('returns 200 + persisted submission for valid input', async () => {
@@ -129,5 +133,34 @@ describe('handleSubmit', () => {
     expect(j.error).toBe('looks like spam');
     const list = await listSubmissions(env.DB, { formId: 'contact' });
     expect(list.total).toBe(0);
+  });
+
+  it('sends notification email to settings.notifyEmails after successful submission', async () => {
+    await env.DB.prepare(`UPDATE forms_settings SET notify_emails = ?1 WHERE form_id = 'contact'`)
+      .bind(JSON.stringify(['ops@mmldigi.com'])).run();
+    const fetchSpy = vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(new Response('', { status: 202 }));
+    await handleSubmit(makeReq(validBody), baseEnv, 'contact');
+    const mailCalls = fetchSpy.mock.calls.filter(c => String(c[0]).includes('mailchannels.net'));
+    expect(mailCalls).toHaveLength(1);
+  });
+
+  it('skips email when settings.notifyEmails is empty', async () => {
+    await env.DB.prepare(`UPDATE forms_settings SET notify_emails = '[]' WHERE form_id = 'contact'`).run();
+    const fetchSpy = vi.spyOn(globalThis, 'fetch' as any);
+    await handleSubmit(makeReq(validBody), baseEnv, 'contact');
+    const mailCalls = fetchSpy.mock.calls.filter(c => String(c[0]).includes('mailchannels.net'));
+    expect(mailCalls).toHaveLength(0);
+  });
+
+  it('dispatches configured webhooks after successful submission', async () => {
+    const webhooks = [
+      { id: 'wc', url: 'https://wc.example.com/hook', payload_template: 'wecom_markdown' },
+    ];
+    await env.DB.prepare(`UPDATE forms_settings SET webhooks_json = ?1, notify_emails = '[]' WHERE form_id = 'contact'`)
+      .bind(JSON.stringify(webhooks)).run();
+    const fetchSpy = vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(new Response('', { status: 200 }));
+    await handleSubmit(makeReq(validBody), baseEnv, 'contact');
+    const hookCalls = fetchSpy.mock.calls.filter(c => String(c[0]).includes('wc.example.com'));
+    expect(hookCalls).toHaveLength(1);
   });
 });

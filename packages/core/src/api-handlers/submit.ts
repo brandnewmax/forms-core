@@ -10,6 +10,8 @@ import { validateFields } from '../validation.js';
 import { checkHoneypot, checkTimeOnForm, checkRateLimit } from '../anti-spam.js';
 import { corsHeaders } from '../cors.js';
 import { getLatestSchema, getFormSettings, insertSubmission } from '../db/queries.js';
+import { sendSubmissionEmail } from '../email-forwarder.js';
+import { dispatchWebhook, type WebhookConfig } from '../webhook-dispatcher.js';
 
 interface RawSubmissionBody {
   fields?: Record<string, unknown>;
@@ -136,10 +138,34 @@ export async function handleSubmit(
   };
   await insertSubmission(env.DB, submission);
 
-  // 9. afterStore hook (concurrent, error-isolated)
-  //    Production: ExecutionContext.waitUntil offloads to post-response background work.
-  //    Tests: no execCtx passed → await inline so assertions see hook completion.
-  const afterStorePromise = runHook('afterStore', submission, env);
+  // 9. afterStore: built-in email + webhook + plugin hooks (Pro)
+  //    All concurrent + error-isolated. Use execCtx.waitUntil to offload.
+  const afterStoreTasks: Promise<unknown>[] = [];
+
+  // 9a. Built-in: email notification
+  if (settings && settings.notifyEmails.length > 0) {
+    afterStoreTasks.push(
+      sendSubmissionEmail(submission, {
+        toEmails: settings.notifyEmails,
+        fromEmail: 'noreply@forms.mmldigi.com', // TODO Phase 1d: make tenant-configurable
+        fromName: 'mmldigi forms',
+        subject: `New inquiry — ${formId}`,
+      }).catch(e => console.error('[email-forwarder] failed', e)),
+    );
+  }
+
+  // 9b. Built-in: webhook dispatch
+  const webhookCfgs = (settings?.webhooks ?? []) as WebhookConfig[];
+  for (const cfg of webhookCfgs) {
+    afterStoreTasks.push(
+      dispatchWebhook(submission, cfg).catch(e => console.error(`[webhook:${cfg.id}] failed`, e)),
+    );
+  }
+
+  // 9c. Plugin afterStore hooks (Pro plugins register here)
+  afterStoreTasks.push(runHook('afterStore', submission, env));
+
+  const afterStorePromise = Promise.all(afterStoreTasks);
   if (execCtx?.waitUntil) {
     execCtx.waitUntil(afterStorePromise);
   } else {
