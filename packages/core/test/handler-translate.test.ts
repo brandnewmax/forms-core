@@ -41,6 +41,16 @@ describe('handleTranslateSchema', () => {
     expect((await r.json() as any).error).toContain('SITE_URL');
   });
 
+  it('400 when targetLangs is not a string array', async () => {
+    const r = await handleTranslateSchema(
+      post({ schema: schema(), targetLangs: [123, {}] }),
+      env({ DEEPL_API_KEY: 'k' }),
+      'contact',
+    );
+    expect(r.status).toBe(400);
+    expect((await r.json() as any).error).toContain('targetLangs');
+  });
+
   it('discovers langs from SITE_URL then translates, returning augmented schema (no save)', async () => {
     vi.spyOn(globalThis, 'fetch' as any).mockImplementation(async (url: any, init: any) => {
       if (String(url).includes('/v2/translate')) return deeplEcho(url, init);

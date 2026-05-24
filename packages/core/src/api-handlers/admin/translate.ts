@@ -14,6 +14,10 @@ export async function handleTranslateSchema(req: Request, env: Env, _formId: str
   let body: { schema?: FormSchema; targetLangs?: string[] };
   try { body = await req.json(); } catch { return jsonErr(400, 'Invalid JSON'); }
   if (!body.schema || !Array.isArray(body.schema.fields)) return jsonErr(400, 'schema required');
+  if (body.targetLangs !== undefined &&
+      (!Array.isArray(body.targetLangs) || !body.targetLangs.every((l) => typeof l === 'string'))) {
+    return jsonErr(400, 'targetLangs must be a string array');
+  }
 
   let targetLangs = body.targetLangs;
   if (!targetLangs || targetLangs.length === 0) {
