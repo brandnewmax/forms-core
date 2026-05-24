@@ -81,3 +81,6 @@ export type { FormRecord, UpdateSettingsInput } from './db/queries.js';
 export { signSession, verifySession } from './auth/session.js';
 export type { SessionPayload } from './auth/session.js';
 export { handleLogin, handleCallback, handleLogout } from './auth/github-oauth.js';
+
+export { getAuthedUser, requireAuth } from './auth/middleware.js';
+export type { RequireAuthResult } from './auth/middleware.js';
