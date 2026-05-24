@@ -26,3 +26,5 @@ export {
   runHook,
   getRegisteredPlugins,
 } from './plugin-loader.js';
+
+export { validateFields } from './validation.js';
