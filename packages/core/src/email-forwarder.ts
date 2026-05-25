@@ -5,6 +5,7 @@ export interface EmailOptions {
   fromEmail: string;
   fromName: string;
   subject: string;
+  apiKey: string;          // Resend API key
 }
 
 export interface EmailResult {
@@ -50,16 +51,17 @@ export async function sendSubmissionEmail(
 ): Promise<EmailResult> {
   const html = buildEmailHtml(submission);
   const payload = {
-    personalizations: [{
-      to: opts.toEmails.map(email => ({ email })),
-    }],
-    from: { email: opts.fromEmail, name: opts.fromName },
+    from: `${opts.fromName} <${opts.fromEmail}>`,
+    to: opts.toEmails,
     subject: opts.subject,
-    content: [{ type: 'text/html', value: html }],
+    html,
   };
-  const resp = await fetch('https://api.mailchannels.net/tx/v1/send', {
+  const resp = await fetch('https://api.resend.com/emails', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Authorization': `Bearer ${opts.apiKey}`,
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify(payload),
   });
   return { ok: resp.ok, status: resp.status };

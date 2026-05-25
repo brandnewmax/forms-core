@@ -57,6 +57,16 @@ export async function insertSubmission(db: D1Database, s: Submission): Promise<v
   ).run();
 }
 
+/** Record the outcome of the notification-email forward for a submission. */
+export async function setSubmissionEmailStatus(
+  db: D1Database,
+  id: string,
+  status: 'sent' | 'failed',
+): Promise<void> {
+  await db.prepare('UPDATE submissions SET email_forward_status = ?1 WHERE id = ?2')
+    .bind(status, id).run();
+}
+
 interface SubmissionRow {
   id: string;
   form_id: string;

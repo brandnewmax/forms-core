@@ -39,45 +39,48 @@ describe('buildEmailHtml', () => {
 describe('sendSubmissionEmail', () => {
   beforeEach(() => vi.restoreAllMocks());
 
-  it('POSTs to MailChannels with personalizations + content', async () => {
-    const spy = vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(new Response('', { status: 202 }));
+  it('POSTs to Resend with bearer auth + from/to/subject/html', async () => {
+    const spy = vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(new Response(JSON.stringify({ id: 're_1' }), { status: 200 }));
     await sendSubmissionEmail(makeSubmission(), {
       toEmails: ['ops@mmldigi.com'],
-      fromEmail: 'noreply@mmldigi.com',
+      fromEmail: 'onboarding@resend.dev',
       fromName: 'mmldigi forms',
       subject: 'New inquiry: contact',
+      apiKey: 're_test_key',
     });
     expect(spy).toHaveBeenCalledWith(
-      'https://api.mailchannels.net/tx/v1/send',
+      'https://api.resend.com/emails',
       expect.objectContaining({ method: 'POST' }),
     );
-    const body = JSON.parse(spy.mock.calls[0]![1]!.body as string);
-    expect(body.personalizations[0].to[0].email).toBe('ops@mmldigi.com');
-    expect(body.from.email).toBe('noreply@mmldigi.com');
+    const init = spy.mock.calls[0]![1]!;
+    expect((init.headers as Record<string, string>)['Authorization']).toBe('Bearer re_test_key');
+    const body = JSON.parse(init.body as string);
+    expect(body.to).toEqual(['ops@mmldigi.com']);
+    expect(body.from).toBe('mmldigi forms <onboarding@resend.dev>');
     expect(body.subject).toBe('New inquiry: contact');
-    expect(body.content[0].type).toBe('text/html');
+    expect(body.html).toContain('contact');
   });
 
-  it('returns { ok: true } on 202 success', async () => {
-    vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(new Response('', { status: 202 }));
-    const r = await sendSubmissionEmail(makeSubmission(), { toEmails: ['a@b.com'], fromEmail: 'x@y.com', fromName: 'x', subject: 's' });
+  it('returns { ok: true } on 200 success', async () => {
+    vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(new Response(JSON.stringify({ id: 're_1' }), { status: 200 }));
+    const r = await sendSubmissionEmail(makeSubmission(), { toEmails: ['a@b.com'], fromEmail: 'x@y.com', fromName: 'x', subject: 's', apiKey: 'k' });
     expect(r.ok).toBe(true);
   });
 
   it('returns { ok: false, status } on non-2xx', async () => {
-    vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(new Response('rejected', { status: 400 }));
-    const r = await sendSubmissionEmail(makeSubmission(), { toEmails: ['a@b.com'], fromEmail: 'x@y.com', fromName: 'x', subject: 's' });
+    vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(new Response('rejected', { status: 422 }));
+    const r = await sendSubmissionEmail(makeSubmission(), { toEmails: ['a@b.com'], fromEmail: 'x@y.com', fromName: 'x', subject: 's', apiKey: 'k' });
     expect(r.ok).toBe(false);
-    expect(r.status).toBe(400);
+    expect(r.status).toBe(422);
   });
 
   it('sends to multiple recipients', async () => {
-    const spy = vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(new Response('', { status: 202 }));
+    const spy = vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(new Response(JSON.stringify({ id: 're_1' }), { status: 200 }));
     await sendSubmissionEmail(makeSubmission(), {
       toEmails: ['a@b.com', 'c@d.com'],
-      fromEmail: 'x@y.com', fromName: 'x', subject: 's',
+      fromEmail: 'x@y.com', fromName: 'x', subject: 's', apiKey: 'k',
     });
     const body = JSON.parse(spy.mock.calls[0]![1]!.body as string);
-    expect(body.personalizations[0].to).toHaveLength(2);
+    expect(body.to).toHaveLength(2);
   });
 });

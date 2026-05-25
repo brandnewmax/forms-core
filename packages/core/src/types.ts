@@ -99,6 +99,9 @@ export interface Env {
   DEEPL_API_KEY?: string;          // DeepL auth key (secret)
   DEEPL_SERVER_URL?: string;       // e.g. https://api.deepl-pro.com (proxy); default https://api.deepl.com
   SITE_URL?: string;               // host site root, e.g. https://mmldigi-en-site.pages.dev (for hreflang discovery)
+  // ── email notification (optional; forwarding off when RESEND_API_KEY absent) ──
+  RESEND_API_KEY?: string;         // Resend API key (secret)
+  EMAIL_FROM?: string;             // sender, e.g. "onboarding@resend.dev" (test) or "inquiries@mmldigi.com"
 }
 
 /**

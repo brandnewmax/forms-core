@@ -25,9 +25,12 @@ ADMIN_BASE_URL = "https://forms.{TENANT}.com"
 # Feature is OFF unless the DEEPL_API_KEY secret is also set (see below).
 DEEPL_SERVER_URL = "https://api.deepl.com"   # or a proxy, e.g. https://api.deepl-pro.com
 SITE_URL = "https://{TENANT}.example.com"    # host site root; its hreflang tags decide target languages
+# Optional — email notifications. Forwarding is OFF unless the RESEND_API_KEY secret is set.
+EMAIL_FROM = "onboarding@resend.dev"         # Resend test sender (only sends to your Resend account email); use a verified domain for real recipients
 # Secrets — set via:
 #   wrangler pages secret put ADMIN_GITHUB_USERS   (comma-separated GitHub logins)
 #   wrangler pages secret put GITHUB_CLIENT_ID
 #   wrangler pages secret put GITHUB_CLIENT_SECRET
 #   wrangler pages secret put SESSION_SECRET       (32+ random chars)
 #   wrangler pages secret put DEEPL_API_KEY        (optional — enables admin form auto-translation)
+#   wrangler pages secret put RESEND_API_KEY       (optional — enables email notifications via Resend)

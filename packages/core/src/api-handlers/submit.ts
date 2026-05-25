@@ -9,7 +9,7 @@ import { runHook } from '../plugin-loader.js';
 import { validateFields } from '../validation.js';
 import { checkHoneypot, checkTimeOnForm, checkRateLimit } from '../anti-spam.js';
 import { corsHeaders } from '../cors.js';
-import { getLatestSchema, getFormSettings, insertSubmission } from '../db/queries.js';
+import { getLatestSchema, getFormSettings, insertSubmission, setSubmissionEmailStatus } from '../db/queries.js';
 import { sendSubmissionEmail } from '../email-forwarder.js';
 import { dispatchWebhook, type WebhookConfig } from '../webhook-dispatcher.js';
 
@@ -142,15 +142,22 @@ export async function handleSubmit(
   //    All concurrent + error-isolated. Use execCtx.waitUntil to offload.
   const afterStoreTasks: Promise<unknown>[] = [];
 
-  // 9a. Built-in: email notification
-  if (settings && settings.notifyEmails.length > 0) {
+  // 9a. Built-in: email notification (via Resend). Off unless RESEND_API_KEY set.
+  //     Persist the send outcome to submissions.email_forward_status.
+  if (env.RESEND_API_KEY && settings && settings.notifyEmails.length > 0) {
     afterStoreTasks.push(
       sendSubmissionEmail(submission, {
         toEmails: settings.notifyEmails,
-        fromEmail: 'noreply@forms.mmldigi.com', // TODO Phase 1d: make tenant-configurable
+        fromEmail: env.EMAIL_FROM ?? 'onboarding@resend.dev',
         fromName: 'mmldigi forms',
         subject: `New inquiry — ${formId}`,
-      }).catch(e => console.error('[email-forwarder] failed', e)),
+        apiKey: env.RESEND_API_KEY,
+      })
+        .then(r => setSubmissionEmailStatus(env.DB, submission.id, r.ok ? 'sent' : 'failed'))
+        .catch(async (e) => {
+          console.error('[email-forwarder] failed', e);
+          await setSubmissionEmailStatus(env.DB, submission.id, 'failed');
+        }),
     );
   }
 

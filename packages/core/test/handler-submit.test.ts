@@ -135,20 +135,33 @@ describe('handleSubmit', () => {
     expect(list.total).toBe(0);
   });
 
-  it('sends notification email to settings.notifyEmails after successful submission', async () => {
+  it('sends notification email (Resend) + records email_forward_status=sent', async () => {
     await env.DB.prepare(`UPDATE forms_settings SET notify_emails = ?1 WHERE form_id = 'contact'`)
       .bind(JSON.stringify(['ops@mmldigi.com'])).run();
-    const fetchSpy = vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(new Response('', { status: 202 }));
-    await handleSubmit(makeReq(validBody), baseEnv, 'contact');
-    const mailCalls = fetchSpy.mock.calls.filter(c => String(c[0]).includes('mailchannels.net'));
+    const fetchSpy = vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(new Response(JSON.stringify({ id: 're_1' }), { status: 200 }));
+    const mailEnv = { ...baseEnv, RESEND_API_KEY: 're_test_key' };
+    const resp = await handleSubmit(makeReq(validBody), mailEnv, 'contact');
+    const mailCalls = fetchSpy.mock.calls.filter(c => String(c[0]).includes('api.resend.com'));
     expect(mailCalls).toHaveLength(1);
+    const id = (await resp.json() as any).id;
+    const row = await env.DB.prepare(`SELECT email_forward_status FROM submissions WHERE id = ?1`).bind(id).first() as any;
+    expect(row.email_forward_status).toBe('sent');
   });
 
-  it('skips email when settings.notifyEmails is empty', async () => {
+  it('skips email when settings.notifyEmails is empty (even with key set)', async () => {
     await env.DB.prepare(`UPDATE forms_settings SET notify_emails = '[]' WHERE form_id = 'contact'`).run();
     const fetchSpy = vi.spyOn(globalThis, 'fetch' as any);
+    await handleSubmit(makeReq(validBody), { ...baseEnv, RESEND_API_KEY: 're_test_key' }, 'contact');
+    const mailCalls = fetchSpy.mock.calls.filter(c => String(c[0]).includes('api.resend.com'));
+    expect(mailCalls).toHaveLength(0);
+  });
+
+  it('skips email when RESEND_API_KEY is not configured', async () => {
+    await env.DB.prepare(`UPDATE forms_settings SET notify_emails = ?1 WHERE form_id = 'contact'`)
+      .bind(JSON.stringify(['ops@mmldigi.com'])).run();
+    const fetchSpy = vi.spyOn(globalThis, 'fetch' as any).mockResolvedValue(new Response('', { status: 200 }));
     await handleSubmit(makeReq(validBody), baseEnv, 'contact');
-    const mailCalls = fetchSpy.mock.calls.filter(c => String(c[0]).includes('mailchannels.net'));
+    const mailCalls = fetchSpy.mock.calls.filter(c => String(c[0]).includes('api.resend.com'));
     expect(mailCalls).toHaveLength(0);
   });
 
