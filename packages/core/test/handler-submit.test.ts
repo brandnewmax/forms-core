@@ -215,4 +215,27 @@ describe('handleSubmit', () => {
     expect(j.length).toBe(50);
     expect(j[0]!.title!.length).toBe(512);
   });
+
+  it('drops journey entries with non-finite ts, empty url, or non-object items', async () => {
+    const body = {
+      ...validBody,
+      context: {
+        ...validBody.context,
+        journey: [
+          null,
+          42,
+          { url: '/good', title: 'Good', ts: 1716540000000 },
+          { url: '', ts: 1716540001000 },
+          { url: '/nan', ts: NaN },
+          { url: '/inf', ts: Infinity },
+        ],
+      },
+    };
+    const resp = await handleSubmit(makeReq(body), baseEnv, 'contact');
+    expect(resp.status).toBe(200);
+    const list = await listSubmissions(env.DB, { formId: 'contact' });
+    expect(list.items[0]!.context.journey).toEqual([
+      { url: '/good', title: 'Good', ts: 1716540000000 },
+    ]);
+  });
 });

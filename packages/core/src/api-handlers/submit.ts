@@ -59,7 +59,7 @@ function parseJourney(raw: unknown): Array<{ url: string; title?: string; ts: nu
   for (const item of raw.slice(0, MAX_JOURNEY_ENTRIES)) {
     if (!item || typeof item !== 'object') continue;
     const r = item as Record<string, unknown>;
-    if (typeof r.url !== 'string' || typeof r.ts !== 'number') continue;
+    if (typeof r.url !== 'string' || r.url.length === 0 || typeof r.ts !== 'number' || !Number.isFinite(r.ts)) continue;
     const entry: { url: string; title?: string; ts: number } = {
       url: r.url.slice(0, MAX_JOURNEY_STR),
       ts: r.ts,
