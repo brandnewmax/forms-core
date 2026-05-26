@@ -12,6 +12,7 @@ export interface SubmissionPayload {
     first_seen_at?: number;
     viewport?: string;
     ua_brand?: string;
+    journey?: Array<{ url: string; title?: string; ts: number }>;
   };
   _meta: {
     honeypot: string;

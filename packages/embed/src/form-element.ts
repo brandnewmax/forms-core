@@ -1,6 +1,7 @@
 import { renderForm, type RenderedForm } from './renderer.js';
 import { fetchSchema, postSubmission } from './api-client.js';
 import { dispatchFormEvent } from './events.js';
+import { readJourney } from './journey.js';
 import type { FormSchema } from '@mmldigi/forms-core';
 
 const TAG = 'mmldigi-form';
@@ -151,6 +152,7 @@ export class MmldigiForm extends HTMLElement {
       this.rendered.container.querySelector<HTMLButtonElement>('.mf-submit');
     if (submitBtn) submitBtn.disabled = true;
 
+    const journey = readJourney(window.sessionStorage);
     const payload = {
       fields: this.rendered.getValues(),
       context: {
@@ -159,6 +161,7 @@ export class MmldigiForm extends HTMLElement {
         lang: this.getLang(),
         referrer: document.referrer,
         utm: this.parseUtmFromUrl(),
+        ...(journey ? { journey } : {}),
       },
       _meta: {
         honeypot: this.rendered.getHoneypotValue(),
