@@ -34,6 +34,28 @@ describe('buildEmailHtml', () => {
     expect(html).not.toContain('<script>alert(1)</script>');
     expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
   });
+
+  it('renders a Browsing path section when journey is present, escaped', () => {
+    const sub = makeSubmission({
+      context: {
+        ip: '1.2.3.4', userAgent: 'UA', referrer: '', pageUrl: 'https://m.com/c', utm: {},
+        journey: [
+          { url: '/products', title: 'Products', ts: 1716540000000 },
+          { url: '/p<script>', title: 'x', ts: 1716540060000 },
+        ],
+      },
+    });
+    const html = buildEmailHtml(sub);
+    expect(html).toContain('Browsing path');
+    expect(html).toContain('/products');
+    expect(html).toContain('Products');
+    expect(html).not.toContain('/p<script>');
+    expect(html).toContain('/p&lt;script&gt;');
+  });
+
+  it('omits the Browsing path section when journey is absent or empty', () => {
+    expect(buildEmailHtml(makeSubmission())).not.toContain('Browsing path');
+  });
 });
 
 describe('sendSubmissionEmail', () => {

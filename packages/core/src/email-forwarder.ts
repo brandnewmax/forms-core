@@ -26,6 +26,15 @@ export function buildEmailHtml(s: Submission): string {
   const rows = Object.entries(s.fields).map(([k, v]) =>
     `<tr><td style="padding:6px 12px;color:#666;font-family:monospace;">${escapeHtml(k)}</td><td style="padding:6px 12px;">${escapeHtml(v)}</td></tr>`
   ).join('');
+  const journey = s.context.journey;
+  const journeyHtml = journey && journey.length > 0
+    ? `<h3 style="margin:24px 0 8px;font-size:14px;color:#666;">Browsing path (${journey.length})</h3>
+  <ol style="font-size:13px;color:#333;padding-left:20px;margin:0 0 8px;">
+    ${journey.map(j =>
+      `<li style="padding:2px 0;">${escapeHtml(j.url)}${j.title ? ` — <span style="color:#888;">${escapeHtml(j.title)}</span>` : ''} <span style="color:#aaa;">${escapeHtml(new Date(j.ts).toISOString())}</span></li>`
+    ).join('')}
+  </ol>`
+    : '';
   return `<!doctype html>
 <html><body style="font-family:system-ui,sans-serif;max-width:600px;margin:auto;color:#1A1A1A;">
   <h2 style="margin:0 0 16px;">New inquiry — ${escapeHtml(s.formId)}</h2>
@@ -42,6 +51,7 @@ export function buildEmailHtml(s: Submission): string {
     <tr><td style="padding:4px 12px;color:#888;">UTM</td><td style="padding:4px 12px;">${escapeHtml(JSON.stringify(s.context.utm))}</td></tr>
     <tr><td style="padding:4px 12px;color:#888;">Submission ID</td><td style="padding:4px 12px;font-family:monospace;">${escapeHtml(s.id)}</td></tr>
   </table>
+  ${journeyHtml}
 </body></html>`;
 }
 
