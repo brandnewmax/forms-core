@@ -1,4 +1,5 @@
 import type { FormSchema } from '@mmldigi/forms-core';
+import type { JourneyEntry } from './journey.js';
 
 export interface SubmissionPayload {
   fields: Record<string, unknown>;
@@ -12,7 +13,7 @@ export interface SubmissionPayload {
     first_seen_at?: number;
     viewport?: string;
     ua_brand?: string;
-    journey?: Array<{ url: string; title?: string; ts: number }>;
+    journey?: JourneyEntry[];
   };
   _meta: {
     honeypot: string;
