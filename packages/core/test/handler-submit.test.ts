@@ -176,4 +176,43 @@ describe('handleSubmit', () => {
     const hookCalls = fetchSpy.mock.calls.filter(c => String(c[0]).includes('wc.example.com'));
     expect(hookCalls).toHaveLength(1);
   });
+
+  it('persists a valid journey into context.journey', async () => {
+    const body = {
+      ...validBody,
+      context: {
+        ...validBody.context,
+        journey: [
+          { url: '/products', title: 'Products', ts: 1716540000000 },
+          { url: '/pricing', title: 'Pricing', ts: 1716540060000 },
+        ],
+      },
+    };
+    const resp = await handleSubmit(makeReq(body), baseEnv, 'contact');
+    expect(resp.status).toBe(200);
+    const list = await listSubmissions(env.DB, { formId: 'contact' });
+    expect(list.items[0]!.context.journey).toEqual([
+      { url: '/products', title: 'Products', ts: 1716540000000 },
+      { url: '/pricing', title: 'Pricing', ts: 1716540060000 },
+    ]);
+  });
+
+  it('drops a malformed journey but still stores the submission (200)', async () => {
+    const body = { ...validBody, context: { ...validBody.context, journey: 'not-an-array' } };
+    const resp = await handleSubmit(makeReq(body), baseEnv, 'contact');
+    expect(resp.status).toBe(200);
+    const list = await listSubmissions(env.DB, { formId: 'contact' });
+    expect(list.items[0]!.context.journey).toBeUndefined();
+  });
+
+  it('caps journey to 50 entries and truncates long strings', async () => {
+    const big = Array.from({ length: 60 }, (_, i) => ({ url: '/p' + i, title: 'x'.repeat(1000), ts: i }));
+    const body = { ...validBody, context: { ...validBody.context, journey: big } };
+    const resp = await handleSubmit(makeReq(body), baseEnv, 'contact');
+    expect(resp.status).toBe(200);
+    const list = await listSubmissions(env.DB, { formId: 'contact' });
+    const j = list.items[0]!.context.journey!;
+    expect(j.length).toBe(50);
+    expect(j[0]!.title!.length).toBe(512);
+  });
 });

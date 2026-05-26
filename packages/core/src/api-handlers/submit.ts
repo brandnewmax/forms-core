@@ -25,6 +25,7 @@ interface RawSubmissionBody {
     first_seen_at?: number;
     viewport?: string;
     ua_brand?: string;
+    journey?: unknown;
   };
   _meta?: {
     honeypot?: string;
@@ -48,6 +49,26 @@ interface WaitUntilCapable {
 }
 
 const MAX_BODY_BYTES = 65_536; // 64KB — generous for forms, blocks D1 row DoS
+const MAX_JOURNEY_ENTRIES = 50;
+const MAX_JOURNEY_STR = 512;
+
+/** Server-authoritative parse of client-supplied journey. Client cap is not trusted. */
+function parseJourney(raw: unknown): Array<{ url: string; title?: string; ts: number }> | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const out: Array<{ url: string; title?: string; ts: number }> = [];
+  for (const item of raw.slice(0, MAX_JOURNEY_ENTRIES)) {
+    if (!item || typeof item !== 'object') continue;
+    const r = item as Record<string, unknown>;
+    if (typeof r.url !== 'string' || typeof r.ts !== 'number') continue;
+    const entry: { url: string; title?: string; ts: number } = {
+      url: r.url.slice(0, MAX_JOURNEY_STR),
+      ts: r.ts,
+    };
+    if (typeof r.title === 'string') entry.title = r.title.slice(0, MAX_JOURNEY_STR);
+    out.push(entry);
+  }
+  return out.length > 0 ? out : undefined;
+}
 
 export async function handleSubmit(
   req: Request,
@@ -109,6 +130,7 @@ export async function handleSubmit(
       utm: body.context?.utm ?? {},
       sessionId: body.context?.session_id,
       firstSeenAt: body.context?.first_seen_at,
+      journey: parseJourney(body.context?.journey),
     },
   };
 
