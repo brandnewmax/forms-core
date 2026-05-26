@@ -135,7 +135,7 @@ function rowToSubmission(r: SubmissionRow): Submission {
       sessionId: r.session_id ?? undefined,
       firstSeenAt: r.first_seen_at ?? undefined,
       journey: r.journey_json
-        ? safeJson<Array<{ url: string; ts: number }> | undefined>(r.journey_json, undefined, `submissions.${r.id}.journey_json`)
+        ? safeJson<Array<{ url: string; title?: string; ts: number }> | undefined>(r.journey_json, undefined, `submissions.${r.id}.journey_json`)
         : undefined,
     },
     score: r.score ?? undefined,

@@ -52,7 +52,7 @@ export interface SubmitCtx {
     referrer: string;
     pageUrl: string;
     utm: Record<string, string>;
-    journey?: Array<{ url: string; ts: number }>;
+    journey?: Array<{ url: string; title?: string; ts: number }>;
     sessionId?: string;
     firstSeenAt?: number;
   };
