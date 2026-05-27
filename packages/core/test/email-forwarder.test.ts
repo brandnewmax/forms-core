@@ -56,6 +56,47 @@ describe('buildEmailHtml', () => {
   it('omits the Browsing path section when journey is absent or empty', () => {
     expect(buildEmailHtml(makeSubmission())).not.toContain('Browsing path');
   });
+
+  it('shows per-page dwell from arrival deltas and submit time for the last page', () => {
+    const sub = makeSubmission({
+      createdAt: 10000,
+      context: {
+        ip: '1.2.3.4', userAgent: 'UA', referrer: '', pageUrl: '/c', utm: {},
+        journey: [
+          { url: '/a', title: 'A', ts: 1000 },
+          { url: '/b', title: 'B', ts: 4000 },
+          { url: '/c', title: 'C', ts: 5000 },
+        ],
+      },
+    });
+    const html = buildEmailHtml(sub);
+    // /a: 4000-1000=3000ms="3s"; /b: 5000-4000=1000ms="1s"; /c(last): 10000-5000=5000ms="5s"
+    expect(html).toContain('>3s<');
+    expect(html).toContain('>1s<');
+    expect(html).toContain('>5s<');
+    expect(html).toContain('(→ submitted)');
+    expect(html).toContain('3 pages');
+    expect(html).toContain('started 00:00:01 UTC'); // ts=1000ms → 00:00:01
+  });
+
+  it('clamps negative last-page dwell (clock skew) to <1s', () => {
+    const sub = makeSubmission({
+      createdAt: 500,
+      context: { ip: '1.2.3.4', userAgent: 'UA', referrer: '', pageUrl: '/a', utm: {},
+        journey: [{ url: '/a', ts: 1000 }] },
+    });
+    expect(buildEmailHtml(sub)).toContain('<1s');
+  });
+
+  it('formats minute-scale dwell', () => {
+    const sub = makeSubmission({
+      createdAt: 999999999,
+      context: { ip: '1.2.3.4', userAgent: 'UA', referrer: '', pageUrl: '/a', utm: {},
+        journey: [{ url: '/a', ts: 0 }, { url: '/b', ts: 65000 }] },
+    });
+    // /a dwell = 65000ms → "1m 5s"
+    expect(buildEmailHtml(sub)).toContain('1m 5s');
+  });
 });
 
 describe('sendSubmissionEmail', () => {
